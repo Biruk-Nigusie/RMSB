@@ -33,7 +33,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://127.0.0.1:5173",
-      "https://rmsf-ebon.vercel.app/",
+      "https://rmsf-ebon.vercel.app",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -100,6 +100,6 @@ app.use("*", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 CMSB Backend server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`CMSB Backend server running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
 });
