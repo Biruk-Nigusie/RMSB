@@ -1,8 +1,9 @@
 import express from 'express';
-import { getAllCondominiums } from '../controllers/condominiumController.js';
+import { getAllCondominiums, createCondominium } from '../controllers/condominiumController.js';
 
 const router = express.Router();
 
 router.get('/', getAllCondominiums);
+router.post('/', createCondominium);
 
 export default router;
