@@ -1,0 +1,358 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Resident {
+  id               String   @id @default(uuid())
+  fullName         String   @map("full_name")
+  phone            String   @unique
+  email            String?
+  block            String
+  houseNo          String   @map("house_no")
+  ownershipType    OwnershipType @map("ownership_type")
+  ownerName        String?  @map("owner_name")
+  familyMembers    Int      @map("family_members")
+  carPlate         String?  @map("car_plate")
+  dateRegistered   DateTime @default(now()) @map("date_registered")
+  status           ResidentStatus @default(ACTIVE)
+  createdById      String?  @map("created_by")
+  condominiumId    String   @map("condominium_id")
+  passwordHash     String   @map("password_hash")
+
+  createdBy        Admin?   @relation(fields: [createdById], references: [id])
+  condominium      Condominium @relation(fields: [condominiumId], references: [id])
+  parkingSlots     ParkingSlot[]
+  parkingRequests  ParkingRequest[]
+  utilities        Utility[]
+  complaints       Complaint[]
+  groupMemberships EkubEddirMember[]
+  groupPayments    EkubEddirPayment[]
+  servicePayments  ServicePayment[]
+
+  adminGroups      EkubEddir[]
+  wonGroups        EkubEddir[] @relation("GroupWinner")
+  receivedNotifications Notification[]
+
+  @@map("residents")
+}
+
+model ParkingSlot {
+  id            String   @id @default(uuid())
+  slotNo        String   @map("slot_no")
+  carOwnerId    String?  @map("car_owner_id")
+  carPlate      String?  @map("car_plate")
+  isReserved    Boolean  @map("is_reserved")
+  feeMonthly    Decimal  @map("fee_monthly")
+  paymentStatus PaymentStatus @map("payment_status")
+  datePaid      DateTime? @map("date_paid")
+  telebirrPhone String?  @map("telebirr_phone")
+  qrCodePath    String?  @map("qr_code_path")
+
+  carOwner      Resident? @relation(fields: [carOwnerId], references: [id])
+  requests      ParkingRequest[]
+
+  @@map("parking_slots")
+}
+
+model ParkingRequest {
+  id            String   @id @default(uuid())
+  residentId    String   @map("resident_id")
+  slotId        String?  @map("slot_id")
+  requestedSlot String?  @map("requested_slot")
+  message       String?
+  documentPath  String?  @map("document_path")
+  status        RequestStatus @default(PENDING)
+  adminMessage  String?  @map("admin_message")
+  createdAt     DateTime @default(now()) @map("created_at")
+  processedAt   DateTime? @map("processed_at")
+
+  resident      Resident @relation(fields: [residentId], references: [id])
+  parkingSlot   ParkingSlot? @relation(fields: [slotId], references: [id])
+
+  @@map("parking_requests")
+}
+
+model EkubEddir {
+  id                   String   @id @default(uuid())
+  name                 String
+  type                 GroupType
+  adminId              String   @map("admin_id")
+  createdAt            DateTime @default(now()) @map("created_at")
+  monthlyContribution  Decimal  @map("monthly_contribution")
+  paymentMethod        PaymentMethod @map("payment_method")
+  telebirrPhone        String?  @map("telebirr_phone")
+  qrCodePath           String?  @map("qr_code_path")
+  currentWinnerId      String?  @map("current_winner_id")
+  lastWinnerDate       DateTime? @map("last_winner_date")
+
+  admin                Resident @relation(fields: [adminId], references: [id])
+  currentWinner        Resident? @relation("GroupWinner", fields: [currentWinnerId], references: [id])
+  members              EkubEddirMember[]
+  payments             EkubEddirPayment[]
+
+  @@map("ekub_eddir")
+}
+
+model EkubEddirMember {
+  id       String   @id @default(uuid())
+  groupId  String   @map("group_id")
+  memberId String   @map("member_id")
+  joinDate DateTime @default(now()) @map("join_date")
+  status   MemberStatus @default(ACTIVE)
+
+  group    EkubEddir @relation(fields: [groupId], references: [id])
+  member   Resident  @relation(fields: [memberId], references: [id])
+
+  @@map("ekub_eddir_members")
+}
+
+model EkubEddirPayment {
+  id          String   @id @default(uuid())
+  memberId    String   @map("member_id")
+  groupId     String   @map("group_id")
+  amount      Decimal
+  paymentDate DateTime @default(now()) @map("payment_date")
+  method      String
+  roundNo     Int?     @map("round_no")
+  proofPath   String?  @map("proof_path")
+
+  member      Resident  @relation(fields: [memberId], references: [id])
+  group       EkubEddir @relation(fields: [groupId], references: [id])
+
+  @@map("ekub_eddir_payments")
+}
+
+model ServiceProvider {
+  id          String   @id @default(uuid())
+  name        String
+  serviceType ServiceType @map("service_type")
+  contact     String
+  feeMonthly  Decimal  @map("fee_monthly")
+  rating      Float?
+
+  payments    ServicePayment[]
+
+  @@map("service_providers")
+}
+
+model ServicePayment {
+  id            String   @id @default(uuid())
+  providerId    String   @map("provider_id")
+  residentId    String   @map("resident_id")
+  month         DateTime
+  amount        Decimal
+  paymentStatus PaymentStatus @map("payment_status")
+  paymentDate   DateTime? @map("payment_date")
+
+  provider      ServiceProvider @relation(fields: [providerId], references: [id])
+  resident      Resident @relation(fields: [residentId], references: [id])
+
+  @@map("service_payments")
+}
+
+model Utility {
+  id              String   @id @default(uuid())
+  residentId      String   @map("resident_id")
+  meterNo         String   @map("meter_no")
+  serviceType     UtilityType @map("service_type")
+  currentReading  Int      @map("current_reading")
+  previousReading Int      @map("previous_reading")
+  usage           Int
+  billingAmount   Decimal  @map("billing_amount")
+  paymentStatus   PaymentStatus @map("payment_status")
+  reportIssue     String?  @map("report_issue")
+  reportStatus    ReportStatus? @map("report_status")
+  provider        String
+
+  resident        Resident @relation(fields: [residentId], references: [id])
+
+  @@map("utilities")
+}
+
+model Complaint {
+  id             String   @id @default(uuid())
+  residentId     String   @map("resident_id")
+  category       ComplaintCategory
+  description    String
+  photo          String?
+  status         ComplaintStatus @default(OPEN)
+  assignedAdminId String? @map("assigned_admin")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  resident       Resident @relation(fields: [residentId], references: [id])
+  assignedAdmin  Admin?   @relation(fields: [assignedAdminId], references: [id])
+
+  @@map("complaints")
+}
+
+model Announcement {
+  id             String   @id @default(uuid())
+  title          String
+  message        String
+  authorId       String   @map("author_id")
+  targetAudience AudienceType @map("target_audience")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  author         Admin    @relation(fields: [authorId], references: [id])
+
+  @@map("announcements")
+}
+
+model Admin {
+  id                   String   @id @default(uuid())
+  name                 String
+  phone                String   @unique
+  email                String   @unique
+  role                 AdminRole
+  assignedCondominium  String?  @map("assigned_condominium")
+  passwordHash         String   @map("password_hash")
+
+  createdResidents     Resident[]
+  complaints           Complaint[]
+  announcements        Announcement[]
+  approvedCondominiums Condominium[]
+
+  sentNotifications    Notification[] @relation("NotificationSender")
+
+  @@map("admins")
+}
+
+model Condominium {
+  id          String   @id @default(uuid())
+  name        String
+  location    String
+  totalBlocks Int      @map("total_blocks")
+  createdAt   DateTime @default(now()) @map("created_at")
+  approvedById String? @map("approved_by")
+
+  approvedBy  Admin?   @relation(fields: [approvedById], references: [id])
+  residents   Resident[]
+
+  @@map("condominiums")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String   @map("actor_id")
+  actorType   ActorType @map("actor_type")
+  action      String
+  targetTable String   @map("target_table")
+  timestamp   DateTime @default(now())
+  ipAddress   String?  @map("ip_address")
+
+  @@map("audit_logs")
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  title       String
+  message     String
+  recipientId String   @map("recipient_id")
+  senderId    String   @map("sender_id")
+  type        NotificationType
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  recipient   Resident @relation(fields: [recipientId], references: [id])
+  sender      Admin    @relation("NotificationSender", fields: [senderId], references: [id])
+
+  @@map("notifications")
+}
+
+enum OwnershipType {
+  OWNED
+  RENTED
+}
+
+enum ResidentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PaymentStatus {
+  PAID
+  PENDING
+  OVERDUE
+}
+
+enum GroupType {
+  EKUB
+  EDDIR
+}
+
+enum PaymentMethod {
+  CASH
+  TELEBIRR
+  CHAPA
+  IN_APP
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ServiceType {
+  CLEANING
+  SECURITY
+  GARBAGE
+}
+
+enum UtilityType {
+  ELECTRICITY
+  WATER
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+}
+
+enum ComplaintCategory {
+  WATER
+  ELECTRICITY
+  SECURITY
+  MAINTENANCE
+  THEFT
+  OTHER
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum AudienceType {
+  ALL
+  BLOCK
+  GROUP
+}
+
+enum AdminRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ActorType {
+  ADMIN
+  RESIDENT
+}
+
+enum NotificationType {
+  ANNOUNCEMENT
+  PAYMENT_REMINDER
+  COMPLAINT_UPDATE
+  SYSTEM_ALERT
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
