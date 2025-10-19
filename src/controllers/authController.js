@@ -119,11 +119,9 @@ export const updateProfile = async (req, res) => {
       carPlate: updateData.carPlate,
     };
 
-    // Temporarily store profile image URL (until migration is run)
+    // Add profileImage if it exists in the request
     if (updateData.profileImage) {
-      // For now, we'll need to handle this differently since the column doesn't exist yet
-      // Skip profileImage update until database migration is complete
-      console.log('Profile image URL received:', updateData.profileImage);
+      allowedFields.profileImage = updateData.profileImage;
     }
 
     // Remove undefined fields
