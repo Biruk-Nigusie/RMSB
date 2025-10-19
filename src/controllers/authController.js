@@ -103,15 +103,26 @@ export const getProfile = async (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
+  console.log('=== UPDATE PROFILE DEBUG START ===');
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('Request user:', req.user);
+  
   try {
     const { id, type } = req.user;
     
+    console.log('User ID:', id);
+    console.log('User Type:', type);
+    
     if (!id || !type) {
+      console.log('ERROR: Invalid user session');
       return res.status(401).json({ error: 'Invalid user session' });
     }
     
     const updateData = req.body;
     delete updateData.passwordHash;
+    
+    console.log('Update data after cleanup:', JSON.stringify(updateData, null, 2));
 
     // Build allowed fields based on user type
     const allowedFields = {};
@@ -119,65 +130,94 @@ export const updateProfile = async (req, res) => {
     // Common fields for both admin and resident
     if (updateData.fullName !== undefined && updateData.fullName !== '') {
       allowedFields.fullName = updateData.fullName;
+      console.log('Added fullName:', updateData.fullName);
     }
     if (updateData.email !== undefined && updateData.email !== '') {
       allowedFields.email = updateData.email;
+      console.log('Added email:', updateData.email);
     }
     if (updateData.phone !== undefined && updateData.phone !== '') {
       allowedFields.phone = updateData.phone;
+      console.log('Added phone:', updateData.phone);
     }
     if (updateData.profileImage !== undefined) {
       allowedFields.profileImage = updateData.profileImage;
+      console.log('Added profileImage:', updateData.profileImage);
     }
     
     // Resident-specific fields
     if (type === 'resident') {
+      console.log('Processing resident-specific fields');
       if (updateData.block !== undefined && updateData.block !== '') {
         allowedFields.block = updateData.block;
+        console.log('Added block:', updateData.block);
       }
       if (updateData.houseNo !== undefined && updateData.houseNo !== '') {
         allowedFields.houseNo = updateData.houseNo;
+        console.log('Added houseNo:', updateData.houseNo);
       }
       if (updateData.carPlate !== undefined) {
         allowedFields.carPlate = updateData.carPlate || null;
+        console.log('Added carPlate:', updateData.carPlate);
       }
       if (updateData.familyMembers !== undefined && updateData.familyMembers !== '') {
         const familyMembersInt = parseInt(updateData.familyMembers);
+        console.log('Family members conversion:', updateData.familyMembers, '->', familyMembersInt);
         if (!isNaN(familyMembersInt) && familyMembersInt > 0) {
           allowedFields.familyMembers = familyMembersInt;
+          console.log('Added familyMembers:', familyMembersInt);
         }
       }
     }
     
     // Admin-specific fields
     if (type === 'admin') {
+      console.log('Processing admin-specific fields');
       if (updateData.name !== undefined && updateData.name !== '') {
         allowedFields.name = updateData.name;
+        console.log('Added name:', updateData.name);
       }
     }
 
+    console.log('Final allowed fields:', JSON.stringify(allowedFields, null, 2));
+
     // Check if there are any fields to update
     if (Object.keys(allowedFields).length === 0) {
+      console.log('ERROR: No valid fields to update');
       return res.status(400).json({ error: 'No valid fields to update' });
     }
 
+    console.log('Attempting database update...');
     let updatedUser;
     if (type === 'admin') {
+      console.log('Updating admin with ID:', id);
       updatedUser = await prisma.admin.update({
         where: { id },
         data: allowedFields
       });
     } else {
+      console.log('Updating resident with ID:', id);
       updatedUser = await prisma.resident.update({
         where: { id },
         data: allowedFields
       });
     }
 
+    console.log('Database update successful');
+    console.log('Updated user:', JSON.stringify(updatedUser, null, 2));
+
     const { passwordHash, ...userProfile } = updatedUser;
+    console.log('Sending response:', JSON.stringify(userProfile, null, 2));
+    console.log('=== UPDATE PROFILE DEBUG END ===');
+    
     res.json(userProfile);
   } catch (error) {
-    console.error('Profile update error:', error);
+    console.error('=== PROFILE UPDATE ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Error stack:', error.stack);
+    console.error('Full error:', error);
+    console.error('=== ERROR END ===');
     
     if (error.code === 'P2002') {
       return res.status(400).json({ error: 'Phone number or email already exists' });
@@ -186,6 +226,6 @@ export const updateProfile = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    res.status(500).json({ error: 'Failed to update profile' });
+    res.status(500).json({ error: error.message || 'Failed to update profile' });
   }
 };
