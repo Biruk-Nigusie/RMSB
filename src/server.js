@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 
 import authRoutes from "./routes/authRoutes.js";
@@ -66,12 +65,7 @@ app.options('*', (req, res) => {
   res.sendStatus(200);
 });
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // limit each IP to 200 requests per windowMs
-});
-app.use(limiter);
+
 
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
