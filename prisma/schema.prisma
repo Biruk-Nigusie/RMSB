@@ -18,6 +18,7 @@ model Resident {
   ownerName        String?  @map("owner_name")
   familyMembers    Int      @map("family_members")
   carPlate         String?  @map("car_plate")
+  profileImage     String?  @map("profile_image")
   dateRegistered   DateTime @default(now()) @map("date_registered")
   status           ResidentStatus @default(ACTIVE)
   createdById      String?  @map("created_by")
@@ -210,6 +211,7 @@ model Admin {
   email                String   @unique
   role                 AdminRole
   assignedCondominium  String?  @map("assigned_condominium")
+  profileImage         String?  @map("profile_image")
   passwordHash         String   @map("password_hash")
 
   createdResidents     Resident[]
