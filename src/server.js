@@ -39,7 +39,16 @@ app.use(
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+      "Content-Type", 
+      "Authorization", 
+      "x-uploadthing-package",
+      "x-uploadthing-version",
+      "x-uploadthing-api-key",
+      "x-uploadthing-be-adapter",
+      "x-uploadthing-fe-package",
+      "x-uploadthing-fe-version"
+    ],
   })
 );
 
