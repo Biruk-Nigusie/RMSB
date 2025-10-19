@@ -108,28 +108,32 @@ export const updateProfile = async (req, res) => {
     const updateData = req.body;
     delete updateData.passwordHash;
 
-    // Handle profileImage field gracefully
-    const allowedFields = {
-      fullName: updateData.fullName,
-      email: updateData.email,
-      phone: updateData.phone,
-      block: updateData.block,
-      houseNo: updateData.houseNo,
-      familyMembers: updateData.familyMembers ? parseInt(updateData.familyMembers) : undefined,
-      carPlate: updateData.carPlate,
-    };
-
-    // Add profileImage if it exists in the request
-    if (updateData.profileImage) {
-      allowedFields.profileImage = updateData.profileImage;
-    }
-
-    // Remove undefined fields
-    Object.keys(allowedFields).forEach(key => {
-      if (allowedFields[key] === undefined) {
-        delete allowedFields[key];
+    // Build allowed fields based on user type
+    const allowedFields = {};
+    
+    // Common fields for both admin and resident
+    if (updateData.fullName !== undefined) allowedFields.fullName = updateData.fullName;
+    if (updateData.email !== undefined) allowedFields.email = updateData.email;
+    if (updateData.phone !== undefined) allowedFields.phone = updateData.phone;
+    if (updateData.profileImage !== undefined) allowedFields.profileImage = updateData.profileImage;
+    
+    // Resident-specific fields
+    if (type === 'resident') {
+      if (updateData.block !== undefined) allowedFields.block = updateData.block;
+      if (updateData.houseNo !== undefined) allowedFields.houseNo = updateData.houseNo;
+      if (updateData.carPlate !== undefined) allowedFields.carPlate = updateData.carPlate;
+      if (updateData.familyMembers !== undefined) {
+        const familyMembersInt = parseInt(updateData.familyMembers);
+        if (!isNaN(familyMembersInt)) {
+          allowedFields.familyMembers = familyMembersInt;
+        }
       }
-    });
+    }
+    
+    // Admin-specific fields
+    if (type === 'admin') {
+      if (updateData.name !== undefined) allowedFields.name = updateData.name;
+    }
 
     let updatedUser;
     if (type === 'admin') {
