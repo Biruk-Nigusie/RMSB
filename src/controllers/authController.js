@@ -105,6 +105,11 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const { id, type } = req.user;
+    
+    if (!id || !type) {
+      return res.status(401).json({ error: 'Invalid user session' });
+    }
+    
     const updateData = req.body;
     delete updateData.passwordHash;
 
@@ -112,19 +117,33 @@ export const updateProfile = async (req, res) => {
     const allowedFields = {};
     
     // Common fields for both admin and resident
-    if (updateData.fullName !== undefined) allowedFields.fullName = updateData.fullName;
-    if (updateData.email !== undefined) allowedFields.email = updateData.email;
-    if (updateData.phone !== undefined) allowedFields.phone = updateData.phone;
-    if (updateData.profileImage !== undefined) allowedFields.profileImage = updateData.profileImage;
+    if (updateData.fullName !== undefined && updateData.fullName !== '') {
+      allowedFields.fullName = updateData.fullName;
+    }
+    if (updateData.email !== undefined && updateData.email !== '') {
+      allowedFields.email = updateData.email;
+    }
+    if (updateData.phone !== undefined && updateData.phone !== '') {
+      allowedFields.phone = updateData.phone;
+    }
+    if (updateData.profileImage !== undefined) {
+      allowedFields.profileImage = updateData.profileImage;
+    }
     
     // Resident-specific fields
     if (type === 'resident') {
-      if (updateData.block !== undefined) allowedFields.block = updateData.block;
-      if (updateData.houseNo !== undefined) allowedFields.houseNo = updateData.houseNo;
-      if (updateData.carPlate !== undefined) allowedFields.carPlate = updateData.carPlate;
-      if (updateData.familyMembers !== undefined) {
+      if (updateData.block !== undefined && updateData.block !== '') {
+        allowedFields.block = updateData.block;
+      }
+      if (updateData.houseNo !== undefined && updateData.houseNo !== '') {
+        allowedFields.houseNo = updateData.houseNo;
+      }
+      if (updateData.carPlate !== undefined) {
+        allowedFields.carPlate = updateData.carPlate || null;
+      }
+      if (updateData.familyMembers !== undefined && updateData.familyMembers !== '') {
         const familyMembersInt = parseInt(updateData.familyMembers);
-        if (!isNaN(familyMembersInt)) {
+        if (!isNaN(familyMembersInt) && familyMembersInt > 0) {
           allowedFields.familyMembers = familyMembersInt;
         }
       }
@@ -132,7 +151,14 @@ export const updateProfile = async (req, res) => {
     
     // Admin-specific fields
     if (type === 'admin') {
-      if (updateData.name !== undefined) allowedFields.name = updateData.name;
+      if (updateData.name !== undefined && updateData.name !== '') {
+        allowedFields.name = updateData.name;
+      }
+    }
+
+    // Check if there are any fields to update
+    if (Object.keys(allowedFields).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
     }
 
     let updatedUser;
@@ -152,6 +178,14 @@ export const updateProfile = async (req, res) => {
     res.json(userProfile);
   } catch (error) {
     console.error('Profile update error:', error);
-    res.status(500).json({ error: error.message });
+    
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'Phone number or email already exists' });
+    }
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.status(500).json({ error: 'Failed to update profile' });
   }
 };

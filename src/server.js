@@ -30,11 +30,13 @@ const PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet());
+
+// CORS configuration
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "http://127.0.0.1:5173",
+      "http://127.0.0.1:5173", 
       "https://rmsf-ebon.vercel.app",
     ],
     credentials: true,
@@ -54,6 +56,15 @@ app.use(
     ],
   })
 );
+
+// Handle preflight requests
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,b3,traceparent,tracestate,x-uploadthing-package,x-uploadthing-version,x-uploadthing-api-key,x-uploadthing-be-adapter,x-uploadthing-fe-package,x-uploadthing-fe-version');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
 
 // Rate limiting
 const limiter = rateLimit({
@@ -105,8 +116,13 @@ app.get("/health", (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Something went wrong!" });
+  console.error('Server error:', err.stack);
+  
+  // Set CORS headers for error responses
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  res.status(500).json({ error: err.message || "Something went wrong!" });
 });
 
 // 404 handler
