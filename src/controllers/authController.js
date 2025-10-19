@@ -82,7 +82,20 @@ export const login = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    const { passwordHash, ...userProfile } = req.user;
+    const { id, type } = req.user;
+    
+    let user;
+    if (type === 'admin') {
+      user = await prisma.admin.findUnique({ where: { id } });
+    } else {
+      user = await prisma.resident.findUnique({ where: { id } });
+    }
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const { passwordHash, ...userProfile } = user;
     res.json(userProfile);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -109,7 +122,7 @@ export const updateProfile = async (req, res) => {
     }
 
     const { passwordHash, ...userProfile } = updatedUser;
-    res.json({ message: 'Profile updated successfully', user: userProfile });
+    res.json(userProfile);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
