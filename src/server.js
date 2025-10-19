@@ -20,6 +20,8 @@ import auditRoutes from "./routes/auditRoutes.js";
 import financeRoutes from "./routes/financeRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import bootstrapRoutes from "./routes/bootstrapRoutes.js";
+import { createRouteHandler } from "uploadthing/express";
+import { uploadRouter } from "./uploadthing.js";
 
 dotenv.config();
 
@@ -82,6 +84,7 @@ app.use("/api/audit", auditRoutes);
 app.use("/api/finance", financeRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/bootstrap", bootstrapRoutes);
+app.use("/api/uploadthing", createRouteHandler({ router: uploadRouter }));
 
 // Health check endpoint
 app.get("/health", (req, res) => {
