@@ -42,7 +42,9 @@ app.use(
     allowedHeaders: [
       "Content-Type",
       "Authorization",
+      "b3",
       "traceparent",
+      "tracestate",
       "x-uploadthing-package",
       "x-uploadthing-version",
       "x-uploadthing-api-key",
