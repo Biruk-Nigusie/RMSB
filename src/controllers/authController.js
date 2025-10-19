@@ -108,22 +108,48 @@ export const updateProfile = async (req, res) => {
     const updateData = req.body;
     delete updateData.passwordHash;
 
+    // Handle profileImage field gracefully
+    const allowedFields = {
+      fullName: updateData.fullName,
+      email: updateData.email,
+      phone: updateData.phone,
+      block: updateData.block,
+      houseNo: updateData.houseNo,
+      familyMembers: updateData.familyMembers ? parseInt(updateData.familyMembers) : undefined,
+      carPlate: updateData.carPlate,
+    };
+
+    // Temporarily store profile image URL (until migration is run)
+    if (updateData.profileImage) {
+      // For now, we'll need to handle this differently since the column doesn't exist yet
+      // Skip profileImage update until database migration is complete
+      console.log('Profile image URL received:', updateData.profileImage);
+    }
+
+    // Remove undefined fields
+    Object.keys(allowedFields).forEach(key => {
+      if (allowedFields[key] === undefined) {
+        delete allowedFields[key];
+      }
+    });
+
     let updatedUser;
     if (type === 'admin') {
       updatedUser = await prisma.admin.update({
         where: { id },
-        data: updateData
+        data: allowedFields
       });
     } else {
       updatedUser = await prisma.resident.update({
         where: { id },
-        data: updateData
+        data: allowedFields
       });
     }
 
     const { passwordHash, ...userProfile } = updatedUser;
     res.json(userProfile);
   } catch (error) {
+    console.error('Profile update error:', error);
     res.status(500).json({ error: error.message });
   }
 };
