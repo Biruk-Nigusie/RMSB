@@ -225,12 +225,14 @@ model Admin {
 }
 
 model Condominium {
-  id          String   @id @default(uuid())
-  name        String
-  location    String
-  totalBlocks Int      @map("total_blocks")
-  createdAt   DateTime @default(now()) @map("created_at")
-  approvedById String? @map("approved_by")
+  id             String   @id @default(uuid())
+  name           String
+  location       String
+  totalBlocks    Int      @map("total_blocks")
+  roomsPerFloor  Int?     @map("rooms_per_floor")
+  floorsPerBlock Int?     @map("floors_per_block")
+  createdAt      DateTime @default(now()) @map("created_at")
+  approvedById   String?  @map("approved_by")
 
   approvedBy  Admin?   @relation(fields: [approvedById], references: [id])
   residents   Resident[]

@@ -12,6 +12,12 @@ export const register = async (req, res) => {
 
     const { fullName, phone, email, block, houseNo, ownershipType, ownerName, familyMembers, carPlate, condominiumId, password } = req.body;
 
+    // Validate Ethiopian phone number format
+    const phoneRegex = /^\+251[79]\d{8}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ error: 'Invalid phone number format. Must be +251 followed by 7 or 9 and 8 digits' });
+    }
+
     const existingResident = await prisma.resident.findUnique({ where: { phone } });
     if (existingResident) {
       return res.status(400).json({ error: 'Phone number already registered' });
@@ -50,6 +56,12 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { phone, password, userType } = req.body;
+
+    // Validate Ethiopian phone number format
+    const phoneRegex = /^\+251[79]\d{8}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ error: 'Invalid phone number format. Must be +251 followed by 7 or 9 and 8 digits' });
+    }
 
     let user;
     if (userType === 'admin') {
@@ -137,6 +149,11 @@ export const updateProfile = async (req, res) => {
       console.log('Added email:', updateData.email);
     }
     if (updateData.phone !== undefined && updateData.phone !== '') {
+      // Validate Ethiopian phone number format
+      const phoneRegex = /^\+251[79]\d{8}$/;
+      if (!phoneRegex.test(updateData.phone)) {
+        return res.status(400).json({ error: 'Invalid phone number format. Must be +251 followed by 7 or 9 and 8 digits' });
+      }
       allowedFields.phone = updateData.phone;
       console.log('Added phone:', updateData.phone);
     }

@@ -27,7 +27,7 @@ export const getAllResidents = async (req, res) => {
       }
     });
 
-    res.json(residents);
+    res.json({ data: residents });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

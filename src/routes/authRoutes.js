@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post('/register', [
   body('fullName').notEmpty().withMessage('Full name is required'),
-  body('phone').isMobilePhone().withMessage('Valid phone number is required'),
+  body('phone').matches(/^\+251[79]\d{8}$/).withMessage('Valid Ethiopian phone number is required'),
   body('block').notEmpty().withMessage('Block is required'),
   body('houseNo').notEmpty().withMessage('House number is required'),
   body('ownershipType').isIn(['OWNED', 'RENTED']).withMessage('Invalid ownership type'),
@@ -17,7 +17,7 @@ router.post('/register', [
 ], register);
 
 router.post('/login', [
-  body('phone').isMobilePhone().withMessage('Valid phone number is required'),
+  body('phone').matches(/^\+251[79]\d{8}$/).withMessage('Valid Ethiopian phone number is required'),
   body('password').notEmpty().withMessage('Password is required'),
   body('userType').isIn(['resident', 'admin']).withMessage('Invalid user type')
 ], login);

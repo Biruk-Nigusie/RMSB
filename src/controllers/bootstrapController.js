@@ -15,6 +15,12 @@ export const createBootstrapSuperAdmin = async (req, res) => {
 
     const { name, phone, email, password } = req.body;
 
+    // Validate Ethiopian phone number format
+    const phoneRegex = /^\+251[79]\d{8}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ error: 'Invalid phone number format. Must be +251 followed by 7 or 9 and 8 digits' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const superAdmin = await prisma.admin.create({

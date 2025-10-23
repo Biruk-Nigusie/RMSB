@@ -24,24 +24,12 @@ export const getAllAuditLogs = async (req, res) => {
     const logs = await prisma.auditLog.findMany({
       skip: parseInt(skip),
       take: parseInt(limit),
-      orderBy: { timestamp: 'desc' },
-      include: {
-        admin: { select: { name: true } },
-        resident: { select: { fullName: true } }
-      }
+      orderBy: { timestamp: 'desc' }
     });
 
     const total = await prisma.auditLog.count();
 
-    res.json({
-      logs,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    });
+    res.json({ data: logs });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
